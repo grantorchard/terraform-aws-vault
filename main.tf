@@ -78,7 +78,6 @@ module "vault" {
 }
 
 resource aws_route53_record "this" {
-  count   = length(var.hostname)
   zone_id = data.aws_route53_zone.this.id
   name    = "${var.hostname}.${data.aws_route53_zone.this.name}"
   type    = "A"
