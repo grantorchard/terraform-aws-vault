@@ -115,18 +115,6 @@ data aws_iam_policy_document "assume" {
       identifiers = ["ec2.amazonaws.com"]
     }
 	}
-	statement {
-		actions = [
-			"ec2:DescribeInstances",
-			"ec2:DescribeTags",
-			"autoscaling:DescribeAutoScalingGroups",
-			"kms:Encrypt",
-			"kms:Decrypt",
-			"kms:DescribeKey"
-		]
-
-		resources = ["*"]
-  }
 }
 
 data aws_iam_policy_document "this" {
