@@ -105,7 +105,7 @@ module "security_group_vault" {
   tags = var.tags
 }
 
-data aws_iam_policy_document "assume" {
+data aws_iam_policy_document "this" {
   statement {
     effect  = "Allow"
     actions = ["sts:AssumeRole"]
@@ -114,23 +114,35 @@ data aws_iam_policy_document "assume" {
       type        = "Service"
       identifiers = ["ec2.amazonaws.com"]
     }
+	}
+	statement {
+		actions = [
+			"ec2:DescribeInstances",
+			"ec2:DescribeTags",
+			"autoscaling:DescribeAutoScalingGroups",
+			"kms:Encrypt",
+			"kms:Decrypt",
+			"kms:DescribeKey"
+		]
+
+		resources = ["*"]
   }
 }
 
-data aws_iam_policy_document "this" {
-  statement {
-    actions = [
-      "ec2:DescribeInstances",
-      "ec2:DescribeTags",
-      "autoscaling:DescribeAutoScalingGroups",
-      "kms:Encrypt",
-      "kms:Decrypt",
-      "kms:DescribeKey"
-    ]
+# data aws_iam_policy_document "this" {
+#   statement {
+#     actions = [
+#       "ec2:DescribeInstances",
+#       "ec2:DescribeTags",
+#       "autoscaling:DescribeAutoScalingGroups",
+#       "kms:Encrypt",
+#       "kms:Decrypt",
+#       "kms:DescribeKey"
+#     ]
 
-    resources = ["*"]
-  }
-}
+#     resources = ["*"]
+#   }
+# }
 
 
 resource aws_iam_instance_profile "this" {
@@ -141,7 +153,7 @@ resource aws_iam_instance_profile "this" {
 
 resource aws_iam_role "this" {
   name_prefix        = var.hostname
-  assume_role_policy = data.aws_iam_policy_document.assume.json
+  assume_role_policy = data.aws_iam_policy_document.this.json
 }
 
 resource aws_iam_role_policy "this" {
