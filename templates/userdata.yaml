@@ -3,19 +3,16 @@ packages:
   - jq
 
 write_files:
-  - path: /etc/vault.d/vault.conf
-    content: ${vault_conf}
-    permissions: '0644'
-    owner: vault:vault
-    encoding: b64
+  # - path: /etc/vault.d/vault.conf
+  #   content: ${vault_conf}
+  #   permissions: '0644'
+  #   owner: vault:vault
+  #   encoding: b64
   - path: /etc/environment
     content: |
-      VAULT_ADDR=http://${ip_address}:8200
+      VAULT_ADDR=http://127.0.0.1:8200
     append: true
 
 runcmd:
   - sudo systemctl enable vault
   - sudo systemctl restart vault
-  - payload=$(vault operator init -address="http://${ip_address}:8200" --format=json)
-  - echo $payload >> /etc/vault.d/vault_init
-  - data='{"text":'"`jq .root_token <<< $payload`"'}'

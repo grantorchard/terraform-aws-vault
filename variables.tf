@@ -1,6 +1,6 @@
 variable hostname {
-  type = list
-  default = ["vault0","vault1"]
+  type = string
+  default = "vault"
 }
 
 variable key_name {
@@ -10,10 +10,7 @@ variable key_name {
 
 variable tags {
   type = map
-  default = {
-    TTL   = "48"
-    owner = "Grant Orchard"
-  }
+  default = {}
 }
 
 variable instance_type {

@@ -1,4 +1,10 @@
-data terraform_remote_state "this" {
+provider "aws" {
+	default_tags {
+		tags = local.tags
+	}
+}
+
+data "terraform_remote_state" "aws-core" {
   backend = "remote"
 
   config = {
@@ -10,10 +16,18 @@ data terraform_remote_state "this" {
 }
 
 locals {
-  public_subnets = data.terraform_remote_state.this.outputs.public_subnets
-  security_group_outbound = data.terraform_remote_state.this.outputs.security_group_outbound
-  security_group_ssh = data.terraform_remote_state.this.outputs.security_group_ssh
-  vpc_id = data.terraform_remote_state.this.outputs.vpc_id
+  public_subnets = data.terraform_remote_state.aws-core.outputs.public_subnets
+  security_group_outbound = data.terraform_remote_state.aws-core.outputs.security_group_outbound
+  security_group_ssh = data.terraform_remote_state.aws-core.outputs.security_group_ssh
+  vpc_id = data.terraform_remote_state.aws-core.outputs.vpc_id
+	tags = merge(var.tags, {
+     owner       = "go"
+		 se-region   = "apj"
+		 purpose     = "vault_assume_role_testing"
+     ttl         = "48"
+		 terraform   = true
+		 hc-internet-facing = true
+   })
 }
 
 data aws_route53_zone "this" {
@@ -26,7 +40,7 @@ data aws_ami "ubuntu" {
 
   filter {
     name = "tag:application"
-    values = ["vault-1.4.0"]
+    values = ["vault"]
   }
 
   filter {
@@ -39,9 +53,9 @@ data aws_ami "ubuntu" {
 
 module "vault" {
   source  = "terraform-aws-modules/ec2-instance/aws"
-  version = "2.13.0"
+  version = "2.19.0"
 
-  name = "vault0,vault1"
+  name = "var.hostname"
   instance_count = 2
 
   #private_ip = var.private_ip
@@ -57,7 +71,7 @@ module "vault" {
   vpc_security_group_ids = [
     local.security_group_outbound,
     local.security_group_ssh,
-    module.security_group_vault.this_security_group_id
+    module.security_group_vault.security_group_id
   ]
 
   subnet_id = local.public_subnets[0]
@@ -67,7 +81,7 @@ module "vault" {
 resource aws_route53_record "this" {
   count   = length(var.hostname)
   zone_id = data.aws_route53_zone.this.id
-  name    = "${var.hostname[count.index]}.${data.aws_route53_zone.this.name}"
+  name    = "${var.hostname}.${data.aws_route53_zone.this.name}"
   type    = "A"
   ttl     = "300"
   records = [module.vault.public_ip[count.index]]
@@ -75,6 +89,7 @@ resource aws_route53_record "this" {
 
 module "security_group_vault" {
   source  = "terraform-aws-modules/security-group/aws"
+	version = "4.3.0"
 
   name        = "vault-http"
   description = "vault http access"
