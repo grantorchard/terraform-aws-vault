@@ -172,7 +172,7 @@ resource aws_kms_key "this" {
 resource "aws_kms_grant" "this" {
   name              = "vault-kms"
   key_id            = aws_kms_key.this.key_id
-  grantee_principal = module.vault.arn
+  grantee_principal = module.vault.arn[0]
   operations        = ["Encrypt", "Decrypt", "GenerateDataKey"]
 }
 
