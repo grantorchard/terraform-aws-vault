@@ -105,7 +105,7 @@ module "security_group_vault" {
   tags = var.tags
 }
 
-data aws_iam_policy_document "this" {
+data aws_iam_policy_document "assume" {
   statement {
     effect  = "Allow"
     actions = ["sts:AssumeRole"]
@@ -129,20 +129,20 @@ data aws_iam_policy_document "this" {
   }
 }
 
-# data aws_iam_policy_document "this" {
-#   statement {
-#     actions = [
-#       "ec2:DescribeInstances",
-#       "ec2:DescribeTags",
-#       "autoscaling:DescribeAutoScalingGroups",
-#       "kms:Encrypt",
-#       "kms:Decrypt",
-#       "kms:DescribeKey"
-#     ]
+data aws_iam_policy_document "this" {
+  statement {
+    actions = [
+      "ec2:DescribeInstances",
+      "ec2:DescribeTags",
+      "autoscaling:DescribeAutoScalingGroups",
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:DescribeKey"
+    ]
 
-#     resources = ["*"]
-#   }
-# }
+    resources = ["*"]
+  }
+}
 
 
 resource aws_iam_instance_profile "this" {
@@ -153,7 +153,7 @@ resource aws_iam_instance_profile "this" {
 
 resource aws_iam_role "this" {
   name_prefix        = var.hostname
-  assume_role_policy = data.aws_iam_policy_document.this.json
+  assume_role_policy = data.aws_iam_policy_document.assume.json
 }
 
 resource aws_iam_role_policy "this" {
@@ -167,5 +167,12 @@ resource aws_kms_key "this" {
   description             = "Vault unseal key"
   deletion_window_in_days = 10
   tags = var.tags
+}
+
+resource "aws_kms_grant" "this" {
+  name              = "vault-kms"
+  key_id            = aws_kms_key.this.key_id
+  grantee_principal = module.vault.arn
+  operations        = ["Encrypt", "Decrypt", "GenerateDataKey"]
 }
 
